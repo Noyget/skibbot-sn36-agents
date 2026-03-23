@@ -1,0 +1,39 @@
+module.exports = {
+  apps: [
+    {
+      name: 'skibbot-miner',
+      script: './autoppia_web_agents_subnet/neurons/miner.py',
+      interpreter: 'python3',
+      cwd: __dirname,
+      args: '--netuid 36 --subtensor.network finney --wallet.name primary --wallet.hotkey miner --logging.debug --axon.port 8091',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '2G',
+      env: {
+        PYTHONUNBUFFERED: '1',
+        WALLET_NAME: 'primary',
+        HOTKEY_NAME: 'miner',
+        NETWORK: 'finney',
+        NETUID: '36',
+        AGENT_NAME: 'SkibBot Web Agents',
+        GITHUB_URL: 'https://github.com/Noyget/skibbot-sn36-agents/commit/782862b62008ef9cc2e6fd537600eb6c6ea4a1c0',
+        AXON_PORT: '8091',
+      },
+      error_file: '~/.pm2/logs/skibbot-miner-error.log',
+      out_file: '~/.pm2/logs/skibbot-miner-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    }
+  ],
+  deploy: {
+    production: {
+      user: 'node',
+      host: 'localhost',
+      ref: 'origin/main',
+      repo: 'git@github.com:Noyget/skibbot-sn36-agents.git',
+      path: '/home/openclaw/.openclaw/workspace/bittensor-workspace',
+      'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production'
+    }
+  }
+};
