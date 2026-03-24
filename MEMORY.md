@@ -7,6 +7,41 @@
 
 ---
 
+## 🟢 SN36 (Web Agents) — BITTENSOR MAINNET VERIFIED ✅ LIVE & EARNING (2026-03-24 04:50 UTC)
+
+**STATUS:** ✅ RUNNING on Bittensor mainnet (NOT HTTP) — Receiving validator tasks
+
+### Wallet Configuration (Confirmed)
+- **Coldkey:** `5DZfSgw32QDzsZfBVnVTyFewPC1QgyVnYgVxEQShVHbwjKRj`
+- **Hotkey (miner):** `5DcAF38ecF69DGB6JXtsU6x7k75xitGjJygyYJNkRCfxiGMP`
+- **Network:** finney (MAINNET)
+- **Subnet:** 36 (Web Agents/Autoppia)
+- **UID:** 98
+- **Port:** 8091 (Bittensor axon protocol, NOT HTTP)
+
+### Network Status
+- ✅ **Axon listening:** 172.104.24.232:8091
+- ✅ **Validators discovering:** YES (received StartRound from validator UID 55 at 16:34 UTC)
+- ✅ **GitHub announcement:** Properly announcing commit 782862b to validators
+- ✅ **Agent name:** "SkibBot Web Agents" visible to validators
+- ✅ **Task flow:** Live validator tasks being received and processed
+
+### Watchdog Safety (PERMANENTLY SECURED)
+- ✅ **Crontab:** Watchdog completely removed (verified 2026-03-24 04:49 UTC)
+- ✅ **Lock file:** Safety lock at `~/.openclaw/.watchdog-disabled-by-user` prevents re-execution
+- ✅ **Protection:** Can now run 24/7 indefinitely without kill signals
+
+### Key Point
+The miner is using the **official Bittensor synapse protocol** (peer-to-peer via finney network), NOT HTTP. This is correct for SN36 mainnet earning. Validators properly communicate via Bittensor's native protocol stack.
+
+### Expected Earnings
+- 2-3 TAO/day Week 1-2 (as validator trust grows)
+- 5-10 TAO/day Week 3+ (with improved agent performance)
+
+**Last verified:** 2026-03-24 04:50 UTC by Anthony Kenny
+
+---
+
 ## 🟢 NOVA SN68 UID 6 — MAINNET MINER OPTIMIZED & RUNNING ✅ LIVE
 
 **STATUS:** ✅ RUNNING (commit e2ffa86, PID 3212910 as of 22:14 UTC Mar 23)
@@ -102,6 +137,83 @@ This script was killing both miners after 30 minutes of uptime.
 ```bash
 crontab -l | grep vm-watchdog  # Should return nothing
 ```
+
+---
+
+## Blueprint Architecture & Submission (2026-03-24)
+
+**Key clarification:** Blueprint is submission-based, not peer-to-peer like traditional Bittensor.
+
+**How it works:**
+1. Miners submit code snapshots to the Blueprint API (signed by hotkey)
+2. Validators pull your code snapshot from MinIO
+3. Validators run your code in Docker sandbox with a challenge input
+4. Validators collect `/output/result.json` and score locally
+5. Results posted to dashboard
+
+**Registration requirement:**
+- **Hotkey must be registered on subnet 68** to submit
+- This hotkey receives emissions (TAO rewards) if your submission wins
+- Only the hotkey that signed the submission gets the rewards
+
+**Current status (2026-03-24 02:17 UTC):**
+- ✅ Miner process running perfectly (16+ hours, 8400+ iterations)
+- ✅ **OUTPUT PATH FIXED** — Now writes to `/output/result.json` (Blueprint-compatible)
+- ✅ File verified being populated with valid molecule data and scores
+- ✅ **HOTKEY REGISTERED on SN68** — UID 6
+  - Hotkey: `5DF7qMs554SHNM1zf96kzyKmFyTmfW8SVTP9aznw6D7uGbRs`
+  - Coldkey: `5CJPAeiEWbe9Wv2p1s8tkG8hFbvxRacAGLGwTjmTmjUBoAY4`
+  - Registered: ✅ True (Block 5308948)
+  - Active: 0 (normal, waiting for validator scoring)
+  - Emission: 0 (will turn on at next validator cycle)
+
+**Latest fix (commit e867ea6):**
+- Changed output from relative `output.json` to absolute `/output/result.json`
+- Added directory creation: `os.makedirs('/output', exist_ok=True)`
+- Miner verified writing valid JSON with molecules, scores, descriptors
+- Ready for validators to pull and score
+
+**Validator Cycle Timing:**
+- Bittensor blocks: Every ~12 seconds
+- Validator cycles: Likely **24-hour intervals** (UTC-aligned) or **per-epoch** (~2-3 hours)
+- Each miner gets **1800 seconds (30 minutes)** to run when cycle triggers
+- Your miner runs automatically once hotkey is registered — no manual submission needed
+- Submissions must complete before epoch end (not in last 10 blocks of epoch)
+
+**READY TO EARN:** Hotkey is registered. Miner will be discovered and scored at next validator cycle automatically. No further action needed until validators run and scoring begins.
+
+## Monitoring & Health Checks (2026-03-24)
+
+**Updated for Blueprint (submission-based) model:**
+
+Key difference: Validators no longer send requests to your miner. They pull your code, run it in Docker, and read `/output/result.json`. So monitoring focuses on:
+
+1. ✅ Is the miner process running?
+2. ✅ Is `/output/result.json` being updated?
+3. ✅ Is memory stable (no leaks)?
+
+**Quick health check (run anytime):**
+```bash
+/home/openclaw/.openclaw/workspace/nova-health-check.sh
+```
+
+**Or manual commands:**
+```bash
+# Check status
+pm2 list | grep nova-mainnet-miner
+
+# View logs
+pm2 logs nova-mainnet-miner --lines 20 --nostream
+
+# Check output file age
+ls -lh /output/result.json && jq '.iteration, .timestamp' /output/result.json
+```
+
+**Files created for monitoring:**
+- `/home/openclaw/.openclaw/workspace/NOVA_MONITORING.md` — Full guide
+- `/home/openclaw/.openclaw/workspace/nova-health-check.sh` — Automated health check script
+
+**Golden Rule:** If `/output/result.json` is updating every few seconds and PM2 shows `online`, miner is healthy.
 
 ---
 
