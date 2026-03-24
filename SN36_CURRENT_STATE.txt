@@ -1,0 +1,87 @@
+╔════════════════════════════════════════════════════════════════╗
+║   SN36 MINER — CURRENT STATE SNAPSHOT                          ║
+║   Locked in: 2026-03-24 10:57 UTC                              ║
+╚════════════════════════════════════════════════════════════════╝
+
+✅ PRODUCTION MINER CONFIRMED
+
+Location:     ~/.openclaw/workspace/bittensor-workspace/autoppia-official/neurons/miner.py
+PM2 Process:  skibbot-miner
+PID:          3396065
+Status:       ONLINE
+Uptime:       78+ minutes
+
+Network:      finney (mainnet)
+Subnet:       36 (Autoppia Web Agents)
+UID:          98
+Hotkey:       5DcAF38ecF69DGB6JXtsU6x7k75xitGjJygyYJNkRCfxiGMP
+Port:         8091 (Bittensor peer-to-peer)
+IP:           172.104.24.232:8091
+Stake:        100.65 TAO
+Status:       ✅ REGISTERED & ACTIVE on-chain
+
+Memory:       195.8 MB (stable)
+CPU:          0% idle
+Port:         LISTENING ✅
+Validators:   Receiving tasks ✅
+
+═══════════════════════════════════════════════════════════════════
+
+📚 REFERENCE DOCUMENTS CREATED
+
+1. SN36_MINER_REFERENCE.md
+   - Authoritative current state
+   - Commands for health checks
+   - Wallet details
+   - Startup procedures
+
+2. AGENT_PROTOCOLS_SN36.md
+   - Decision tree for miner operations
+   - What to do / what not to do
+   - Emergency procedures
+   - Confusion prevention
+
+3. SN36_ARCHIVED_VERSIONS/README.md
+   - Documents old/broken versions
+   - Why they're archived
+   - Where they are (don't touch)
+
+4. SN36_CURRENT_STATE.txt
+   - This file - frozen snapshot of current state
+
+5. MEMORY.md (updated)
+   - Added reference section at top
+   - Prevents future confusion
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 QUICK COMMAND CHEAT SHEET
+
+Check status:         pm2 list | grep skibbot
+View logs:            pm2 logs skibbot-miner --lines 20 --nostream
+Verify port:          ss -tlnp | grep 8091
+Verify on-chain:      python3 -c "from bittensor import subtensor; sub = subtensor('finney'); mg = sub.metagraph(36); print('✅ UID 98' if 98 in mg.uids else '❌ NOT FOUND')"
+Restart (if needed):  pm2 restart skibbot-miner
+
+═══════════════════════════════════════════════════════════════════
+
+🚨 ABSOLUTE RULES (FOR FUTURE AGENT SESSIONS)
+
+1. autoppia-official/ = CORRECT
+   autoppia_web_agents_subnet/ = WRONG
+
+2. If unsure, read SN36_MINER_REFERENCE.md
+
+3. Never restart without reading AGENT_PROTOCOLS_SN36.md
+
+4. Validate every command against reference docs
+
+5. If confusion arises, message Anthony before taking action
+
+═══════════════════════════════════════════════════════════════════
+
+Status:  ✅ LOCKED IN & DOCUMENTED
+Ready:   ✅ YES
+Earning: ✅ VALIDATOR CYCLE PENDING
+
+Generated: 2026-03-24 10:57 UTC

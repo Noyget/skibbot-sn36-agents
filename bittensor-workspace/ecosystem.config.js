@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'skibbot-miner',
-      script: './autoppia_web_agents_subnet/neurons/miner.py',
+      script: '/home/openclaw/.openclaw/workspace/bittensor-workspace/autoppia-official/neurons/miner.py',
       interpreter: 'python3',
       cwd: __dirname,
       args: '--netuid 36 --subtensor.network finney --wallet.name primary --wallet.hotkey miner --logging.debug --axon.port 8091',

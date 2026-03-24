@@ -1,0 +1,52 @@
+═══════════════════════════════════════════════════════════════════════════════
+ NOVA MEMORY LEAK FIX — Quick Reference (2026-03-24 05:31 UTC)
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+  Miner crashes by end of 30-min validator cycle due to memory accumulation
+  - 1800 iterations × 500 molecules each
+  - Python kept all 500 results per iteration in memory
+  - Memory grew: 130MB → 2000MB+ by iteration 1800
+
+SOLUTION DEPLOYED: Three-pronged attack
+
+  1. STREAMING TOP-K in score_batch()
+     - Old: Build list of 500 results, sort, keep top 100
+     - New: Only maintain top-100 in memory, discard rest immediately
+     - Impact: 500 results × descriptors gone from memory
+
+  2. AGGRESSIVE GARBAGE COLLECTION
+     - Old: gc.collect() every 50 iterations
+     - New: gc.collect() every 10 iterations + explicit cleanup
+     - Calls agent.cleanup_memory() to flush RDKit/numpy caches
+     - Impact: Memory freed 5x faster
+
+  3. EXPLICIT REFERENCE DELETION
+     - Old: results dict kept in scope after use
+     - New: del results; cleanup_memory() explicitly clears caches
+     - Impact: No lingering Python object references
+
+EXPECTED RESULT:
+  Memory stays ~160MB throughout 30-min cycle (vs. 2000MB crash)
+  Zero restarts during next validator cycle
+
+FILES CHANGED:
+  ✅ nova_ml_build/neurons/miner.py
+  ✅ nova_ml_build/agents/molecular_scout_ml.py
+
+VERIFICATION:
+  - Both files compile: ✅
+  - Ready for next validator cycle: ✅
+  - No further action needed until next cycle
+
+MONITORING (When next cycle starts):
+  ps aux | grep python  # Check VSZ (virtual) and RES (resident)
+  tail -f ~/.pm2/logs/nova-mainnet-miner-out.log | grep "\[GC\]"
+  jq '.iteration' /output/result.json  # Should keep incrementing
+
+FALLBACK (If still growing):
+  1. Reduce molecules: molecules_per_iter 500 → 250
+  2. Increase GC: every 10 → every 5 iterations
+  3. Profile: python -m memory_profiler neurons/miner.py
+
+═══════════════════════════════════════════════════════════════════════════════

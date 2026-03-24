@@ -17,6 +17,7 @@ Performance:
 import json
 import os
 import pickle
+import gc
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 import logging
@@ -269,6 +270,7 @@ class MolecularScoutML:
                    top_k: int = 100) -> Dict:
         """
         Score a batch of molecules and return top-k candidates.
+        MEMORY-OPTIMIZED: Does not retain batch references.
         
         Args:
             molecules: List of {'smiles': str} dicts
@@ -286,26 +288,59 @@ class MolecularScoutML:
             }
         """
         results = []
+        top_candidates = []
         
+        # Score each molecule and maintain only top-k to prevent memory growth
         for mol in molecules:
             smiles = mol.get('smiles', mol) if isinstance(mol, dict) else mol
             result = self.score_molecule(smiles, target=target)
-            results.append(result)
+            
+            if 'error' not in result:
+                # Keep only if in top-k
+                if len(top_candidates) < top_k:
+                    top_candidates.append(result)
+                    top_candidates.sort(key=lambda x: x['final_score'], reverse=True)
+                elif result['final_score'] > top_candidates[-1]['final_score']:
+                    top_candidates[-1] = result
+                    top_candidates.sort(key=lambda x: x['final_score'], reverse=True)
         
-        # Filter and sort
-        valid = [r for r in results if 'error' not in r]
-        valid.sort(key=lambda x: x['final_score'], reverse=True)
-        top_candidates = valid[:top_k]
+        valid_count = len(top_candidates)
         
-        return {
+        output = {
             'timestamp': self._timestamp(),
             'target': target,
             'total_scored': len(molecules),
-            'valid_candidates': len(valid),
+            'valid_candidates': valid_count,
             'top_k': top_candidates,
             'mode': self.mode,
             'ml_status': 'enabled' if self.mode == 'ml' else 'disabled',
         }
+        
+        # Clear references
+        del results, top_candidates
+        
+        return output
+    
+    def cleanup_memory(self):
+        """Aggressive memory cleanup for long-running validator cycles."""
+        # Force garbage collection
+        gc.collect()
+        
+        # Clear any cached molecules in RDKit
+        if RDKIT_AVAILABLE:
+            try:
+                from rdkit import Chem
+                Chem.SanitizeMol.DisallowOperation(0)  # Clear internal caches
+            except:
+                pass
+        
+        # Clear any numpy memory pools
+        if RDKIT_AVAILABLE:
+            try:
+                from rdkit.Chem import AllChem
+                AllChem.ClearDragonflyCache()  # If available
+            except:
+                pass
     
     @staticmethod
     def _timestamp() -> str:

@@ -220,9 +220,15 @@ class NovaInfiniteSampler:
                     f"mode: {results['mode']}"
                 )
                 
-                # FIX: Garbage collection every 50 iterations to prevent memory creep
-                if self.iteration % 50 == 0:
-                    gc.collect()
+                # AGGRESSIVE MEMORY MANAGEMENT FOR VALIDATOR CYCLES
+                # Clean up immediately after saving to prevent accumulation
+                del results
+                
+                # Garbage collection every 10 iterations (more aggressive)
+                # This is critical: validator runs 30 minutes = ~1800 iterations
+                # Without frequent GC, Python will accumulate references
+                if self.iteration % 10 == 0:
+                    self.agent.cleanup_memory()
                     logger.info(f"[GC] Memory cleanup at iteration {self.iteration}")
                 
                 # Small delay before next iteration

@@ -1,0 +1,102 @@
+╔════════════════════════════════════════════════════════════════╗
+║   NOVA SN68 MINER — CURRENT STATE SNAPSHOT                     ║
+║   Locked in: 2026-03-24 11:13 UTC                              ║
+╚════════════════════════════════════════════════════════════════╝
+
+✅ PRODUCTION MINER CONFIRMED
+
+Location:     ~/.openclaw/workspace/nova_ml_build/neurons/miner.py
+PM2 Process:  nova-mainnet-miner
+PID:          3391163
+Status:       ONLINE
+Uptime:       2 hours
+
+Network:      mainnet (Bittensor primary network)
+Subnet:       68 (Biomedical/Molecular)
+UID:          6
+Coldkey:      biomedical_research
+Hotkey:       miner
+Commit:       e2ffa86 (Nova Molecular Scout ML)
+
+Memory:       239 MB (stable, well under 4GB limit)
+CPU:          22.7% (active scoring)
+Output:       /output/result.json (FRESH - updated every 2-3 seconds)
+Iteration:    5579+ (continuously running)
+
+Status:       ✅ FULLY OPERATIONAL & EARNING-READY
+
+═══════════════════════════════════════════════════════════════════
+
+📚 REFERENCE DOCUMENTS CREATED
+
+1. NOVA_MINER_REFERENCE.md
+   - Authoritative current state
+   - Commands for health checks
+   - Wallet details
+   - Startup procedures
+   - Memory management info
+
+2. AGENT_PROTOCOLS_NOVA.md
+   - Decision tree for miner operations
+   - What to do / what not to do
+   - Emergency procedures
+   - Mainnet-specific requirements
+
+3. NOVA_ARCHIVED_VERSIONS/README.md
+   - Documents old/broken versions
+   - Why they're archived
+   - Where they are (don't touch)
+
+4. NOVA_CURRENT_STATE.txt
+   - This file - frozen snapshot of current state
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 QUICK COMMAND CHEAT SHEET
+
+Check status:         pm2 list | grep nova
+View logs (live):     pm2 logs nova-mainnet-miner --lines 30 --nostream
+Check output:         jq . /output/result.json
+Monitor iterations:   watch -n 2 'jq .iteration /output/result.json'
+Get memory:           ps aux | grep nova_ml_build | grep -v grep | awk '{print $6 " KB"}'
+Verify on mainnet:    cat ~/.openclaw/workspace/nova-mainnet-ecosystem.config.js | grep NETWORK
+Restart (if needed):  pm2 restart nova-mainnet-miner
+
+═══════════════════════════════════════════════════════════════════
+
+🚨 ABSOLUTE RULES (FOR FUTURE AGENT SESSIONS)
+
+1. nova_ml_build/neurons/miner.py = CORRECT
+   Old testnet versions = WRONG
+
+2. NETWORK must be "mainnet" (NOT finney)
+
+3. If unsure, read NOVA_MINER_REFERENCE.md
+
+4. Never restart without reading AGENT_PROTOCOLS_NOVA.md
+
+5. Validate every command against reference docs
+
+6. Escalate to Anthony if memory exceeds 1 GB
+
+═══════════════════════════════════════════════════════════════════
+
+Memory Management Notes:
+- Current: 239 MB (excellent)
+- Max allowed: 4 GB (PM2 config)
+- GC frequency: Every 50 iterations
+- No memory leaks detected ✅
+
+Performance Notes:
+- Iterations: 5579+ as of 11:13 UTC
+- Time/iteration: 0.25-0.50 seconds
+- Molecules/iteration: 500 sampled → 10 output
+- Error rate: 0 (all iterations successful)
+
+═══════════════════════════════════════════════════════════════════
+
+Status:  ✅ LOCKED IN & DOCUMENTED
+Ready:   ✅ YES
+Earning: ✅ VALIDATOR CYCLE PENDING
+
+Generated: 2026-03-24 11:13 UTC
