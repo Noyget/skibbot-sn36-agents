@@ -65,7 +65,9 @@ class NovaInfiniteSampler:
         self.agent = MolecularScoutML()
         self.iteration = 0
         self.molecules_generated = 0
-        self.output_file = 'output.json'
+        # Ensure output directory exists for Blueprint validators
+        os.makedirs('/output', exist_ok=True)
+        self.output_file = '/output/result.json'
         self.history_file = 'all_scores_history.json'
         
         logger.info(f"NOVA Miner initialized: target={target}, mode={self.agent.mode}")
