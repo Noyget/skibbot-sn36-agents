@@ -52,28 +52,65 @@ async def act(request: AgentRequest) -> AgentResponse:
     """
     Main agent endpoint for handling validator requests.
     Supports: form_navigator, screenshot_analyzer
+    
+    NEW: Returns action lists instead of analysis for direct task solving.
+    Validators execute these actions in a browser to complete tasks.
     """
     try:
         if request.agent_type == "form_navigator":
             logger.info(f"Form Navigator task: {request.task}")
-            result = await handle_form_navigation_request(request.task, request.data)
+            
+            # NEW: Use solve_form_task to generate actions
+            html = request.data.get("html", "")
+            prompt = request.data.get("prompt", request.task)
+            max_steps = request.data.get("max_steps", 12)
+            
+            actions = await form_agent.solve_form_task(
+                html=html,
+                prompt=prompt,
+                max_steps=max_steps
+            )
+            
             return AgentResponse(
                 success=True,
                 agent="form_navigator",
-                result=result
+                result={
+                    "actions": actions,
+                    "action_count": len(actions),
+                    "status": "ready_for_execution"
+                }
             )
         
         elif request.agent_type == "screenshot_analyzer":
             logger.info(f"Screenshot Analyzer task: {request.task}")
-            # Call the async analyze method
-            result = await screenshot_agent.analyze_screenshot(
-                screenshot_data=request.data.get("screenshot"),
-                analysis_type=request.task
+            
+            # NEW: Use solve_from_screenshot to generate actions
+            screenshot_data = request.data.get("screenshot")
+            prompt = request.data.get("prompt", request.task)
+            max_steps = request.data.get("max_steps", 12)
+            
+            if not screenshot_data:
+                return AgentResponse(
+                    success=False,
+                    agent="screenshot_analyzer",
+                    result=None,
+                    error="screenshot data required"
+                )
+            
+            actions = await screenshot_agent.solve_from_screenshot(
+                screenshot_data=screenshot_data,
+                prompt=prompt,
+                max_steps=max_steps
             )
+            
             return AgentResponse(
                 success=True,
                 agent="screenshot_analyzer",
-                result=result
+                result={
+                    "actions": actions,
+                    "action_count": len(actions),
+                    "status": "ready_for_execution"
+                }
             )
         
         else:

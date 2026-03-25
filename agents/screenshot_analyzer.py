@@ -715,6 +715,118 @@ class ScreenshotAnalyzerAgent:
         """Convert analysis result to JSON string."""
         return json.dumps(result.to_dict(), indent=2)
 
+    async def solve_from_screenshot(
+        self,
+        screenshot_data: bytes,
+        prompt: str,
+        max_steps: int = 12,
+    ) -> list[dict[str, Any]]:
+        """
+        Generate browser actions from screenshot analysis + task prompt.
+        
+        This method converts visual UI analysis into executable actions
+        that validators can run to complete web tasks.
+        
+        Args:
+            screenshot_data: Screenshot image bytes (PNG/JPG)
+            prompt: Task description (e.g., "Click the submit button and fill email")
+            max_steps: Maximum actions to generate (default 12)
+            
+        Returns:
+            List of actions:
+            [
+                {"type": "click", "selector": "button.submit", "reason": "..."},
+                {"type": "input", "selector": "[type=email]", "value": "..."}
+            ]
+        """
+        import tempfile
+        import os
+        import re
+        
+        actions = []
+        start_time = time.time()
+        
+        try:
+            # Step 1: Save screenshot bytes to temp file and analyze
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                tmp.write(screenshot_data)
+                tmp_path = tmp.name
+            
+            try:
+                analysis = await self.analyze_screenshot(tmp_path)
+            finally:
+                # Clean up temp file
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+            
+            # Step 2: Parse task requirements from prompt
+            prompt_lower = prompt.lower()
+            
+            # Extract specific actions and values
+            email_match = re.search(
+                r'(?:email|fill.*email)[:\s]+([^\s,\.;]+@[^\s,\.;]+)',
+                prompt_lower
+            )
+            email_value = email_match.group(1) if email_match else None
+            
+            # Step 3: Find clickable elements matching prompt keywords
+            # Priority: look for buttons/links that match action keywords
+            action_keywords = ['submit', 'send', 'continue', 'next', 'click', 'button']
+            clickable_elements = [
+                e for e in analysis.elements
+                if e.type in ['button', 'link', 'interactive_element'] 
+                or any(kw in e.text.lower() for kw in action_keywords if e.text)
+            ]
+            
+            # Generate click actions for matching buttons/links
+            for element in clickable_elements:
+                action_text = (element.text or '').lower()
+                
+                # Check if this button matches prompt keywords
+                if any(kw in action_text for kw in action_keywords):
+                    actions.append({
+                        "type": "click",
+                        "selector": element.selector or f"[data-element='{element.element_id}']",
+                        "text": element.text,
+                        "reason": f"Click {element.text or 'button'}"
+                    })
+                    break  # Usually only one primary action per task
+            
+            # Step 4: Generate input actions for form fields if values provided
+            form_fields = [e for e in analysis.elements if e.type in ['form_input']]
+            
+            if email_value and form_fields:
+                # Find email field
+                for field in form_fields:
+                    field_name = (field.text or field.selector or '').lower()
+                    if 'email' in field_name or field.selector and '[type=email]' in field.selector:
+                        actions.insert(0, {  # Insert before click action
+                            "type": "click",
+                            "selector": field.selector or f"[type='email']",
+                            "reason": "Focus email field"
+                        })
+                        actions.insert(1, {
+                            "type": "input",
+                            "selector": field.selector or f"[type='email']",
+                            "value": email_value,
+                            "reason": "Fill email field"
+                        })
+                        break
+            
+            execution_time = (time.time() - start_time) * 1000
+            logger.info(
+                f"solve_from_screenshot generated {len(actions)} actions in {execution_time:.2f}ms"
+            )
+            
+            # Respect max_steps limit
+            return actions[:max_steps]
+        
+        except Exception as e:
+            logger.error(f"Error in solve_from_screenshot: {e}", exc_info=True)
+            return []
+
 
 # ============================================================================
 # HTTP Endpoint Handler (FastAPI integration)

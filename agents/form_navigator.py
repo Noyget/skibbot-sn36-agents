@@ -1124,6 +1124,152 @@ class FormNavigationAgent:
         
         return recommendations
 
+    async def solve_form_task(
+        self,
+        html: str,
+        prompt: str,
+        max_steps: int = 12,
+    ) -> list[dict[str, Any]]:
+        """
+        Solve form-based task by generating action sequence.
+        
+        This is the critical new method that converts form analysis into
+        executable browser actions for validators.
+        
+        Args:
+            html: Form HTML content
+            prompt: Task description (e.g., "Fill email with user@example.com and submit")
+            max_steps: Maximum number of actions to generate (default 12)
+            
+        Returns:
+            List of actions that validators can execute:
+            [
+                {"type": "click", "selector": "[name='email']"},
+                {"type": "input", "selector": "[name='email']", "value": "user@example.com"},
+                {"type": "click", "selector": "button[type='submit']"}
+            ]
+        """
+        import re
+        
+        actions = []
+        start_time = time.time()
+        
+        try:
+            # Step 1: Analyze form structure using existing extract_form_structure
+            analysis = await self.extract_form_structure(html_content=html)
+            if not analysis.success or not analysis.form_state:
+                logger.warning(f"Form analysis failed: {analysis.error_message}")
+                return []
+            
+            # Step 2: Extract task requirements from prompt using regex patterns
+            prompt_lower = prompt.lower()
+            field_values = {}
+            
+            # Email pattern
+            email_match = re.search(
+                r'(?:email|e-mail)[:\s]+([^\s,\.;\n]+@[^\s,\.;\n]+)',
+                prompt_lower
+            )
+            if email_match:
+                field_values['email'] = email_match.group(1)
+            
+            # Name pattern
+            name_match = re.search(
+                r'(?:name|full name)[:\s]+([^,\.;\n]+?)(?=\s+and|\s*$)',
+                prompt_lower
+            )
+            if name_match:
+                field_values['name'] = name_match.group(1).strip()
+            
+            # Password pattern
+            pwd_match = re.search(
+                r'(?:password|pass)[:\s]+([^\s,\.;\n]+)',
+                prompt_lower
+            )
+            if pwd_match:
+                field_values['password'] = pwd_match.group(1)
+            
+            # Generic key=value pattern
+            kv_matches = re.finditer(
+                r'(\w+)[:\s]+([^\s,\.;]+)',
+                prompt_lower
+            )
+            for match in kv_matches:
+                key, value = match.groups()
+                if key not in field_values:
+                    field_values[key] = value
+            
+            # Step 3: Generate click + input actions for each identified field
+            for field in analysis.form_state.current_fields:
+                field_name_lower = field.name.lower()
+                
+                # Find value for this field by matching prompt keywords
+                field_value = None
+                for key, value in field_values.items():
+                    if key in field_name_lower or field_name_lower in key:
+                        field_value = value
+                        break
+                
+                # If we have a value for this field, click + input
+                if field_value and field.field_type != FieldType.SUBMIT:
+                    # Click action to focus field
+                    actions.append({
+                        "type": "click",
+                        "selector": f"[name='{field.name}']",
+                        "reason": f"Focus field '{field.name}' for input"
+                    })
+                    
+                    # Input action to fill field
+                    actions.append({
+                        "type": "input",
+                        "selector": f"[name='{field.name}']",
+                        "value": field_value,
+                        "reason": f"Fill {field.field_type.value} field '{field.name}'"
+                    })
+            
+            # Step 4: Find and click submit button
+            # Priority: look for explicit submit in form fields
+            submit_found = False
+            for field in analysis.form_state.current_fields:
+                if field.field_type == FieldType.SUBMIT:
+                    actions.append({
+                        "type": "click",
+                        "selector": f"[name='{field.name}']",
+                        "reason": "Click submit button"
+                    })
+                    submit_found = True
+                    break
+            
+            # If no submit field found, look for submit button or similar
+            if not submit_found:
+                # Common button selectors for form submission
+                submit_selectors = [
+                    "button[type='submit']",
+                    "input[type='submit']",
+                    "button:contains('Submit')",
+                    "button:contains('Send')",
+                    "[type='submit']",
+                ]
+                
+                # Use first found selector (validators will try each)
+                actions.append({
+                    "type": "click",
+                    "selector": submit_selectors[0],
+                    "reason": "Click form submit button"
+                })
+            
+            execution_time = (time.time() - start_time) * 1000
+            logger.info(
+                f"solve_form_task generated {len(actions)} actions in {execution_time:.2f}ms"
+            )
+            
+            # Respect max_steps limit
+            return actions[:max_steps]
+        
+        except Exception as e:
+            logger.error(f"Error in solve_form_task: {e}", exc_info=True)
+            return []
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FastAPI Integration
