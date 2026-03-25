@@ -11,6 +11,8 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '2G',
+      kill_timeout: 5000,  // Hard kill after 5 seconds if SIGTERM fails
+      listen_timeout: 10000,  // Wait 10s for startup
       env: {
         PYTHONUNBUFFERED: '1',
         WALLET_NAME: 'primary',
@@ -18,7 +20,7 @@ module.exports = {
         NETWORK: 'finney',
         NETUID: '36',
         AGENT_NAME: 'SkibBot Web Agents',
-        GITHUB_URL: 'https://github.com/Noyget/skibbot-sn36-agents/commit/782862b62008ef9cc2e6fd537600eb6c6ea4a1c0',
+        GITHUB_URL: 'https://github.com/Noyget/skibbot-sn36-agents/commit/17bab7ca62dcdf909284dee9f1425004766c9df8',
         AXON_PORT: '8091',
       },
       error_file: '~/.pm2/logs/skibbot-miner-error.log',
