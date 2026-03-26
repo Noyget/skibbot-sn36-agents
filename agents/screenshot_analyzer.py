@@ -786,11 +786,26 @@ class ScreenshotAnalyzerAgent:
                 
                 # Check if this button matches prompt keywords
                 if any(kw in action_text for kw in action_keywords):
+                    # FIX #3: Wait for element to be clickable before clicking
+                    actions.append({
+                        "type": "wait_for_element",
+                        "selector": element.selector or f"[data-element='{element.element_id}']",
+                        "timeout": 5000,
+                        "clickable": True,
+                        "reason": f"Wait for button '{element.text or 'button'}' to be interactive"
+                    })
+                    
+                    # FIX #2: Click with retry and alternative selectors
                     actions.append({
                         "type": "click",
                         "selector": element.selector or f"[data-element='{element.element_id}']",
+                        "alternative_selectors": [
+                            f"button:contains('{element.text}')" if element.text else None,
+                            f".{element.selector.split('.')[-1]}" if element.selector and '.' in element.selector else None,
+                        ],
+                        "retry_count": 3,
                         "text": element.text,
-                        "reason": f"Click {element.text or 'button'}"
+                        "reason": f"Click {element.text or 'button'} (with retry logic)"
                     })
                     break  # Usually only one primary action per task
             
@@ -802,16 +817,38 @@ class ScreenshotAnalyzerAgent:
                 for field in form_fields:
                     field_name = (field.text or field.selector or '').lower()
                     if 'email' in field_name or field.selector and '[type=email]' in field.selector:
-                        actions.insert(0, {  # Insert before click action
+                        # FIX #3: Wait for field to load before interacting
+                        actions.insert(0, {
+                            "type": "wait_for_element",
+                            "selector": field.selector or f"[type='email']",
+                            "timeout": 5000,
+                            "clickable": True,
+                            "reason": "Wait for email field to load"
+                        })
+                        
+                        # FIX #2: Click with retry
+                        actions.insert(1, {
                             "type": "click",
                             "selector": field.selector or f"[type='email']",
-                            "reason": "Focus email field"
+                            "alternative_selectors": [
+                                f"input[type='email']",
+                                f"[type='email']",
+                            ],
+                            "retry_count": 3,
+                            "reason": "Focus email field (with fallback selectors)"
                         })
-                        actions.insert(1, {
+                        
+                        # FIX #2: Input with retry
+                        actions.insert(2, {
                             "type": "input",
                             "selector": field.selector or f"[type='email']",
+                            "alternative_selectors": [
+                                f"input[type='email']",
+                                f"[type='email']",
+                            ],
                             "value": email_value,
-                            "reason": "Fill email field"
+                            "retry_count": 3,
+                            "reason": "Fill email field (with fallback selectors)"
                         })
                         break
             

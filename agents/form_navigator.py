@@ -1212,19 +1212,44 @@ class FormNavigationAgent:
                 
                 # If we have a value for this field, click + input
                 if field_value and field.field_type != FieldType.SUBMIT:
-                    # Click action to focus field
+                    # FIX #3: Add wait_for_element action before clicking
+                    # This ensures async page content has loaded
+                    actions.append({
+                        "type": "wait_for_element",
+                        "selector": f"[name='{field.name}']",
+                        "timeout": 5000,
+                        "visible": True,
+                        "clickable": True,
+                        "reason": f"Wait for field '{field.name}' to load and be interactive"
+                    })
+                    
+                    # FIX #2: Click action with retry logic and alternative selectors
                     actions.append({
                         "type": "click",
                         "selector": f"[name='{field.name}']",
-                        "reason": f"Focus field '{field.name}' for input"
+                        "alternative_selectors": [
+                            f"#{field.name}",  # Try ID if name fails
+                            f"input[name='{field.name}']",  # Explicit tag
+                            f"[data-field='{field.name}']",  # Data attribute
+                            f"input#{field.name}",  # Combo: tag + ID
+                        ],
+                        "retry_count": 3,
+                        "retry_delay": 500,
+                        "reason": f"Focus field '{field.name}' for input (with fallback selectors)"
                     })
                     
                     # Input action to fill field
                     actions.append({
                         "type": "input",
                         "selector": f"[name='{field.name}']",
+                        "alternative_selectors": [
+                            f"#{field.name}",
+                            f"input[name='{field.name}']",
+                            f"[data-field='{field.name}']",
+                        ],
                         "value": field_value,
-                        "reason": f"Fill {field.field_type.value} field '{field.name}'"
+                        "retry_count": 3,
+                        "reason": f"Fill {field.field_type.value} field '{field.name}' (with fallback selectors)"
                     })
             
             # Step 4: Find and click submit button
@@ -1232,30 +1257,61 @@ class FormNavigationAgent:
             submit_found = False
             for field in analysis.form_state.current_fields:
                 if field.field_type == FieldType.SUBMIT:
+                    # FIX #3: Wait for submit button to be interactive
+                    actions.append({
+                        "type": "wait_for_element",
+                        "selector": f"[name='{field.name}']",
+                        "timeout": 5000,
+                        "clickable": True,
+                        "reason": "Wait for submit button to be clickable"
+                    })
+                    
+                    # FIX #2 & #6: Click with retry and multiple selector strategies
                     actions.append({
                         "type": "click",
                         "selector": f"[name='{field.name}']",
-                        "reason": "Click submit button"
+                        "alternative_selectors": [
+                            f"#{field.name}",
+                            f"input[type='submit']",
+                            f"[type='submit']",
+                        ],
+                        "retry_count": 3,
+                        "reason": "Click submit button (with fallback selectors)"
                     })
                     submit_found = True
                     break
             
             # If no submit field found, look for submit button or similar
             if not submit_found:
-                # Common button selectors for form submission
+                # FIX #3: Wait for submit button before clicking
+                actions.append({
+                    "type": "wait_for_element",
+                    "selector": "button[type='submit']",
+                    "timeout": 5000,
+                    "clickable": True,
+                    "reason": "Wait for submit button to appear and be clickable"
+                })
+                
+                # FIX #6: Use valid CSS selectors only (no jQuery :contains)
+                # Try multiple strategies in order
                 submit_selectors = [
-                    "button[type='submit']",
-                    "input[type='submit']",
-                    "button:contains('Submit')",
-                    "button:contains('Send')",
-                    "[type='submit']",
+                    "button[type='submit']",        # Standard submit button
+                    "input[type='submit']",         # Submit input
+                    "[type='submit']",              # Any submit element
+                    "button.submit",                # Class-based
+                    "button.btn-primary",           # Bootstrap primary
+                    "button.btn-success",           # Bootstrap success
+                    "button.btn:not([type='button'])",  # Any button except explicit button type
                 ]
                 
-                # Use first found selector (validators will try each)
+                # FIX #2: Pass list of selectors with retry logic
+                # Validator will try each until one works
                 actions.append({
                     "type": "click",
-                    "selector": submit_selectors[0],
-                    "reason": "Click form submit button"
+                    "selector": submit_selectors,  # Pass list of alternatives
+                    "retry_count": 3,
+                    "timeout": 5000,
+                    "reason": "Click form submit button (tries multiple selector strategies)"
                 })
             
             execution_time = (time.time() - start_time) * 1000
