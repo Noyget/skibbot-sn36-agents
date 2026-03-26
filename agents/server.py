@@ -1,163 +1,192 @@
 """
 FastAPI server for Autoppia SN36 agents.
-Runs in Docker container to handle validator requests.
+Implements the /act endpoint compatible with ApifiedWebAgent.
+
+ApifiedWebAgent makes HTTP POST requests to this endpoint with:
+- task: Task object (JSON-serializable)
+- snapshot_html: HTML snapshot as string
+- screenshot: Screenshot as base64 string
+- url: Current URL
+- step_index: Step number
+- history: List of previous actions taken
 """
 
 import asyncio
 import json
 import logging
-from typing import Any, Dict
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from typing import Any, Optional
+from fastapi import FastAPI, HTTPException, Request
 import uvicorn
 
-from .form_navigator import FormNavigationAgent, handle_form_navigation_request
-from .screenshot_analyzer import ScreenshotAnalyzerAgent
-
-# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
 app = FastAPI(title="SkibBot Web Agents", version="1.0.0")
 
-# Initialize agents
-form_agent = FormNavigationAgent()
-screenshot_agent = ScreenshotAnalyzerAgent()
-
-
-class AgentRequest(BaseModel):
-    """Request format for agent calls"""
-    agent_type: str  # "form_navigator" or "screenshot_analyzer"
-    task: str
-    data: Dict[str, Any] = {}
-
-
-class AgentResponse(BaseModel):
-    """Response format from agents"""
-    success: bool
-    agent: str
-    result: Any
-    error: str = None
+# Import agents
+try:
+    from agents.form_navigator import FormNavigationAgent
+    from agents.screenshot_analyzer import ScreenshotAnalyzerAgent
+except ImportError:
+    logger.warning("Could not import agents locally, will handle via generic endpoints")
+    FormNavigationAgent = None
+    ScreenshotAnalyzerAgent = None
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "agents": ["form_navigator", "screenshot_analyzer"]}
+    """Health check endpoint for Docker"""
+    return {"status": "healthy", "service": "SkibBot Web Agents"}
 
 
 @app.post("/act")
-async def act(request: AgentRequest) -> AgentResponse:
+async def act(request: Request) -> list:
     """
-    Main agent endpoint for handling validator requests.
-    Supports: form_navigator, screenshot_analyzer
+    Main /act endpoint that ApifiedWebAgent calls.
     
-    NEW: Returns action lists instead of analysis for direct task solving.
-    Validators execute these actions in a browser to complete tasks.
+    This endpoint receives task information and must return a list of actions.
+    Actions are dictionaries with keys like:
+    - type: "click", "type", "wait", "press", etc.
+    - selector: CSS selector for click actions
+    - text: text to type for type actions
+    - key: key name for press actions
+    - timeout: timeout in seconds for wait actions
+    
+    Returns empty list if agent cannot generate actions (safe fallback).
     """
     try:
-        if request.agent_type == "form_navigator":
-            logger.info(f"Form Navigator task: {request.task}")
-            
-            # NEW: Use solve_form_task to generate actions
-            html = request.data.get("html", "")
-            prompt = request.data.get("prompt", request.task)
-            max_steps = request.data.get("max_steps", 12)
-            
-            actions = await form_agent.solve_form_task(
-                html=html,
-                prompt=prompt,
-                max_steps=max_steps
-            )
-            
-            return AgentResponse(
-                success=True,
-                agent="form_navigator",
-                result={
-                    "actions": actions,
-                    "action_count": len(actions),
-                    "status": "ready_for_execution"
-                }
-            )
+        # Get request body as JSON
+        body = await request.json()
+        logger.info(f"Received /act request: task_type={body.get('task', {}).get('type', '?')}, step={body.get('step_index', 0)}")
         
-        elif request.agent_type == "screenshot_analyzer":
-            logger.info(f"Screenshot Analyzer task: {request.task}")
-            
-            # NEW: Use solve_from_screenshot to generate actions
-            screenshot_data = request.data.get("screenshot")
-            prompt = request.data.get("prompt", request.task)
-            max_steps = request.data.get("max_steps", 12)
-            
-            if not screenshot_data:
-                return AgentResponse(
-                    success=False,
-                    agent="screenshot_analyzer",
-                    result=None,
-                    error="screenshot data required"
+        # Extract parameters
+        task = body.get("task", {})
+        snapshot_html = body.get("snapshot_html", "")
+        screenshot = body.get("screenshot")  # base64-encoded screenshot
+        url = body.get("url", "")
+        step_index = body.get("step_index", 0)
+        history = body.get("history", [])
+        
+        # Get task prompt/description
+        task_prompt = task.get("query") or task.get("description") or "Complete the task"
+        
+        # Route to agent based on available data
+        actions = []
+        
+        # Try form navigation if we have HTML
+        if snapshot_html and FormNavigationAgent:
+            try:
+                agent = FormNavigationAgent()
+                actions = await agent.solve_form_task(
+                    html=snapshot_html,
+                    prompt=task_prompt,
+                    max_steps=1  # One action per call
                 )
-            
-            actions = await screenshot_agent.solve_from_screenshot(
-                screenshot_data=screenshot_data,
-                prompt=prompt,
-                max_steps=max_steps
-            )
-            
-            return AgentResponse(
-                success=True,
-                agent="screenshot_analyzer",
-                result={
-                    "actions": actions,
-                    "action_count": len(actions),
-                    "status": "ready_for_execution"
-                }
-            )
+                if actions:
+                    logger.info(f"Form navigator returned {len(actions)} action(s)")
+                    return _clean_actions(actions)
+            except Exception as e:
+                logger.warning(f"Form navigator failed: {e}")
         
-        else:
-            raise ValueError(f"Unknown agent type: {request.agent_type}")
+        # Fallback: try screenshot analysis if we have screenshot
+        if screenshot and ScreenshotAnalyzerAgent:
+            try:
+                agent = ScreenshotAnalyzerAgent()
+                actions = await agent.solve_from_screenshot(
+                    screenshot_data=screenshot,
+                    prompt=task_prompt,
+                    max_steps=1  # One action per call
+                )
+                if actions:
+                    logger.info(f"Screenshot analyzer returned {len(actions)} action(s)")
+                    return _clean_actions(actions)
+            except Exception as e:
+                logger.warning(f"Screenshot analyzer failed: {e}")
+        
+        # No actions generated
+        logger.info("No actions generated, returning empty list")
+        return []
     
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {e}")
+        return []
     except Exception as e:
-        logger.error(f"Error in agent execution: {e}", exc_info=True)
-        return AgentResponse(
-            success=False,
-            agent=request.agent_type,
-            result=None,
-            error=str(e)
-        )
+        logger.error(f"Unexpected error in /act: {e}", exc_info=True)
+        return []
 
 
-@app.get("/agents")
-async def list_agents():
-    """List available agents"""
-    return {
-        "agents": [
-            {
-                "name": "form_navigator",
-                "description": "Autonomous form structure extraction and navigation",
-                "endpoint": "/act"
-            },
-            {
-                "name": "screenshot_analyzer",
-                "description": "Website screenshot analysis and element detection",
-                "endpoint": "/act"
-            }
-        ]
-    }
+def _clean_actions(actions: list) -> list:
+    """
+    Clean actions to ensure they match expected format.
+    Removes extra fields that might confuse validators.
+    
+    Expected fields:
+    - type: action type
+    - selector: for click
+    - text: for type  
+    - key: for press
+    - timeout: for wait
+    """
+    cleaned = []
+    
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        
+        action_type = action.get("type", "").lower()
+        if not action_type:
+            continue
+        
+        # Build clean action with only relevant fields
+        clean_action = {"type": action_type}
+        
+        if action_type == "click":
+            selector = action.get("selector")
+            if selector:
+                clean_action["selector"] = str(selector)
+            else:
+                continue  # Skip click without selector
+        
+        elif action_type == "type":
+            text = action.get("text") or action.get("value")
+            if text is not None:
+                clean_action["text"] = str(text)
+            else:
+                continue  # Skip type without text
+        
+        elif action_type == "press" or action_type == "key":
+            clean_action["type"] = "press"
+            key = action.get("key")
+            if key:
+                clean_action["key"] = str(key)
+            else:
+                continue
+        
+        elif action_type == "wait":
+            timeout = action.get("timeout", 5)
+            try:
+                clean_action["timeout"] = float(timeout)
+            except (ValueError, TypeError):
+                clean_action["timeout"] = 5.0
+        
+        # All other action types pass through with minimal validation
+        
+        cleaned.append(clean_action)
+    
+    return cleaned
 
 
 @app.get("/status")
 async def status():
-    """Get agent status"""
+    """Status endpoint"""
     return {
-        "name": "SkibBot Web Agents",
+        "service": "SkibBot Web Agents",
         "version": "1.0.0",
-        "agents_ready": ["form_navigator", "screenshot_analyzer"],
-        "timestamp": asyncio.get_event_loop().time()
+        "status": "running"
     }
 
 
 if __name__ == "__main__":
-    # Run server on port 8000 (default for Docker)
     uvicorn.run(
         app,
         host="0.0.0.0",
