@@ -1239,6 +1239,7 @@ class FormNavigationAgent:
                     })
                     
                     # Input action to fill field
+                    # ✅ FIX #2: Use "text" not "value" (validators expect TypeAction.text)
                     actions.append({
                         "type": "input",
                         "selector": f"[name='{field.name}']",
@@ -1247,7 +1248,7 @@ class FormNavigationAgent:
                             f"input[name='{field.name}']",
                             f"[data-field='{field.name}']",
                         ],
-                        "value": field_value,
+                        "text": field_value,  # ✅ CHANGED from "value" to "text"
                         "retry_count": 3,
                         "reason": f"Fill {field.field_type.value} field '{field.name}' (with fallback selectors)"
                     })

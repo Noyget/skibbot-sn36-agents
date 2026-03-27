@@ -1,0 +1,93 @@
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | ERROR    | agents.screenshot_analyzer:_load_image:650 | Image not found: /nonexistent/path/image.png
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_analyze_screenshot_basic0/test_image.png | 5 elements | 0.30ms | confidence=0.89
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_analysis_result_structure0/test_image.png | 5 elements | 0.35ms | confidence=0.89
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:32 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:32 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_overall_confidence_range0/test_image.png | 5 elements | 0.30ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_processing_time_reasonabl0/test_image.png | 5 elements | 0.26ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | ERROR    | agents.screenshot_analyzer:_load_image:650 | Image not found: /nonexistent/image.png
+2026-03-27 03:25:33 | ERROR    | agents.screenshot_analyzer:analyze_screenshot:300 | Analysis failed for /nonexistent/image.png: Failed to load image: /nonexistent/image.png
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_analysis_to_json0/test_image.png | 5 elements | 0.28ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_analyze_multiple0/test_image_0.png | 5 elements | 0.36ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_analyze_multiple0/test_image_1.png | 5 elements | 0.44ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_analyze_multiple0/test_image_2.png | 5 elements | 0.19ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_act_handler_valid0/test_image.png | 5 elements | 0.24ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | ERROR    | agents.screenshot_analyzer:_load_image:650 | Image not found: /nonexistent/image.png
+2026-03-27 03:25:33 | ERROR    | agents.screenshot_analyzer:analyze_screenshot:300 | Analysis failed for /nonexistent/image.png: Failed to load image: /nonexistent/image.png
+2026-03-27 03:25:33 | ERROR    | agents.screenshot_analyzer:act_handler:902 | act_handler failed: Failed to load image: /nonexistent/image.png
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_analysis_performance0/test_image.png | 5 elements | 0.33ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_performance0/perf_test_0.png | 5 elements | 0.26ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_performance0/perf_test_1.png | 5 elements | 0.19ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_performance0/perf_test_2.png | 5 elements | 0.22ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_performance0/perf_test_3.png | 5 elements | 0.19ms | confidence=0.89
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_batch_performance0/perf_test_4.png | 5 elements | 0.19ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_result_to_dict0/test_image.png | 5 elements | 0.27ms | confidence=0.89
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:__init__:225 | ScreenshotAnalyzerAgent initialized (vision=False)
+2026-03-27 03:25:33 | WARNING  | agents.screenshot_analyzer:_load_image:659 | PIL not available; using default image size
+2026-03-27 03:25:33 | INFO     | agents.screenshot_analyzer:analyze_screenshot:290 | Analysis complete: /tmp/pytest-of-openclaw/pytest-0/test_result_to_json0/test_image.png | 5 elements | 0.27ms | confidence=0.89

@@ -14,6 +14,7 @@ ApifiedWebAgent makes HTTP POST requests to this endpoint with:
 import asyncio
 import json
 import logging
+import re
 from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Request
 import uvicorn
@@ -57,15 +58,19 @@ async def act(request: Request) -> list:
     try:
         # Get request body as JSON
         body = await request.json()
-        logger.info(f"Received /act request: task_type={body.get('task', {}).get('type', '?')}, step={body.get('step_index', 0)}")
-        
         # Extract parameters
         task = body.get("task", {})
+        # Handle case where task might be a string instead of dict
+        if isinstance(task, str):
+            task = {"query": task}
+        
         snapshot_html = body.get("snapshot_html", "")
         screenshot = body.get("screenshot")  # base64-encoded screenshot
         url = body.get("url", "")
         step_index = body.get("step_index", 0)
         history = body.get("history", [])
+        
+        logger.info(f"Received /act request: task_type={task.get('type', '?')}, step={step_index}")
         
         # Get task prompt/description
         task_prompt = task.get("query") or task.get("description") or "Complete the task"
@@ -80,7 +85,7 @@ async def act(request: Request) -> list:
                 actions = await agent.solve_form_task(
                     html=snapshot_html,
                     prompt=task_prompt,
-                    max_steps=1  # One action per call
+                    max_steps=12  # ✅ FIX #1: Changed from 1 to 12 (CRITICAL)
                 )
                 if actions:
                     logger.info(f"Form navigator returned {len(actions)} action(s)")
@@ -95,7 +100,7 @@ async def act(request: Request) -> list:
                 actions = await agent.solve_from_screenshot(
                     screenshot_data=screenshot,
                     prompt=task_prompt,
-                    max_steps=1  # One action per call
+                    max_steps=12  # ✅ FIX #1: Changed from 1 to 12 (CRITICAL)
                 )
                 if actions:
                     logger.info(f"Screenshot analyzer returned {len(actions)} action(s)")
@@ -115,17 +120,98 @@ async def act(request: Request) -> list:
         return []
 
 
+def _normalize_selector(selector_value) -> dict:
+    """
+    ✅ FIX #3: Convert string CSS selector to Selector object format
+    that validators expect (Selector with type, attribute, value).
+    
+    Examples:
+    - "[name='email']" → {"type": "attributeValueSelector", "attribute": "name", "value": "email"}
+    - "#submit-btn" → {"type": "attributeValueSelector", "attribute": "id", "value": "submit-btn"}
+    - ".btn-primary" → {"type": "attributeValueSelector", "attribute": "class", "value": "btn-primary"}
+    - "button[type='submit']" → handled as complex selector (pass-through)
+    """
+    if isinstance(selector_value, dict):
+        # Already a Selector object, return as-is
+        return selector_value
+    
+    if isinstance(selector_value, list):
+        # List of selectors (from alternative_selectors)
+        # Convert each one
+        return [_normalize_selector(s) for s in selector_value]
+    
+    selector_str = str(selector_value).strip()
+    
+    # Handle ID selectors: #id-name
+    if selector_str.startswith("#"):
+        return {
+            "type": "attributeValueSelector",
+            "attribute": "id",
+            "value": selector_str[1:],
+            "case_sensitive": False
+        }
+    
+    # Handle class selectors: .class-name
+    if selector_str.startswith("."):
+        return {
+            "type": "attributeValueSelector",
+            "attribute": "class",
+            "value": selector_str[1:],
+            "case_sensitive": False
+        }
+    
+    # Handle attribute selectors: [name='value'], [type='submit'], etc.
+    # Pattern: [attribute='value'] or [attribute="value"]
+    attr_match = None
+    if "[" in selector_str and "]" in selector_str:
+        import re
+        # Try to match [attr='value'] or [attr="value"]
+        match = re.match(r'\[([^=\]]+)=["\']?([^"\'"\]]+)["\']?\]', selector_str)
+        if match:
+            attr_name, attr_value = match.groups()
+            return {
+                "type": "attributeValueSelector",
+                "attribute": attr_name.strip(),
+                "value": attr_value.strip(),
+                "case_sensitive": False
+            }
+    
+    # Handle XPath selectors: //, (//
+    if selector_str.startswith("//") or selector_str.startswith("(//"):
+        return {
+            "type": "xpathSelector",
+            "value": selector_str,
+            "case_sensitive": False
+        }
+    
+    # Complex selectors (tag[attr='val'], multiple conditions, etc.)
+    # Pass through as-is for validator to handle
+    if selector_str:
+        return {
+            "type": "cssSelector",
+            "value": selector_str,
+            "case_sensitive": False
+        }
+    
+    # Fallback: empty selector
+    return {"type": "unknown", "value": ""}
+
+
 def _clean_actions(actions: list) -> list:
     """
-    Clean actions to ensure they match expected format.
-    Removes extra fields that might confuse validators.
+    ✅ FIX #2: Normalize action format for validators.
+    - Convert "value" field to "text" for type/input actions (CRITICAL)
+    - Convert string selectors to Selector objects (CRITICAL)
+    - Preserve metadata: alternative_selectors, retry_count, retry_delay, etc.
+    - Handle wait_for_element as first-class action type
     
-    Expected fields:
-    - type: action type
-    - selector: for click
-    - text: for type  
-    - key: for press
-    - timeout: for wait
+    Rich metadata fields (from FormNavigator):
+    - alternative_selectors: fallback selectors for robust targeting
+    - retry_count: number of retries for transient failures
+    - retry_delay: delay in ms between retries
+    - visible: require element visibility before action
+    - clickable: require element to be clickable
+    - reason: why this action is being taken
     """
     cleaned = []
     
@@ -137,39 +223,83 @@ def _clean_actions(actions: list) -> list:
         if not action_type:
             continue
         
-        # Build clean action with only relevant fields
+        # Start with type (always required)
         clean_action = {"type": action_type}
         
-        if action_type == "click":
-            selector = action.get("selector")
-            if selector:
-                clean_action["selector"] = str(selector)
-            else:
-                continue  # Skip click without selector
-        
-        elif action_type == "type":
-            text = action.get("text") or action.get("value")
-            if text is not None:
-                clean_action["text"] = str(text)
-            else:
-                continue  # Skip type without text
-        
-        elif action_type == "press" or action_type == "key":
-            clean_action["type"] = "press"
-            key = action.get("key")
-            if key:
-                clean_action["key"] = str(key)
-            else:
+        # Copy all top-level fields that validators recognize
+        for field in [
+            "selector",           # Will be normalized to Selector object
+            "alternative_selectors",  # Fallback selectors
+            "text",              # Text to input (preferred)
+            "value",             # Will be converted to "text" (legacy support)
+            "key",               # Key to press
+            "timeout",           # Timeout in ms
+            "visible",           # Require visibility
+            "clickable",         # Require clickability
+            "retry_count",       # Number of retries
+            "retry_delay",       # Delay between retries in ms
+            "reason",            # Why this action (debugging/analysis)
+        ]:
+            if field not in action:
                 continue
+            
+            value = action[field]
+            if value is None:
+                continue
+            
+            # ✅ FIX #2: Handle "value" → "text" conversion for input actions
+            if field == "value":
+                # For type/input actions, use "text" not "value"
+                if action_type in ["type", "input", "typeaction"]:
+                    clean_action["text"] = str(value)
+                    continue  # Don't add "value" field
+                else:
+                    # For other actions, keep "value" if present
+                    clean_action[field] = str(value)
+                    continue
+            
+            # ✅ FIX #3: Normalize selector to Selector object format
+            if field == "selector":
+                normalized = _normalize_selector(value)
+                clean_action[field] = normalized
+                continue
+            
+            if field == "alternative_selectors":
+                # Normalize each alternative selector
+                if isinstance(value, list):
+                    clean_action[field] = [_normalize_selector(s) for s in value]
+                else:
+                    clean_action[field] = _normalize_selector(value)
+                continue
+            
+            # Type conversion for known numeric fields
+            if field in ["timeout", "retry_delay", "retry_count"]:
+                try:
+                    clean_action[field] = float(value) if field == "timeout" else int(value)
+                except (ValueError, TypeError):
+                    pass  # Skip invalid numeric values
+                continue
+            
+            if field in ["visible", "clickable"]:
+                clean_action[field] = bool(value)  # Ensure boolean
+                continue
+            
+            # All other fields: pass through as strings
+            clean_action[field] = str(value) if value is not None else value
         
-        elif action_type == "wait":
-            timeout = action.get("timeout", 5)
-            try:
-                clean_action["timeout"] = float(timeout)
-            except (ValueError, TypeError):
-                clean_action["timeout"] = 5.0
+        # Minimal validation: some actions need core fields
+        if action_type == "click" and "selector" not in clean_action:
+            continue  # Skip click without selector
         
-        # All other action types pass through with minimal validation
+        if action_type in ["type", "input", "typeaction"] and "text" not in clean_action and "value" not in clean_action:
+            continue  # Skip input without text
+        
+        if action_type in ["press", "key"] and "key" not in clean_action:
+            continue  # Skip key press without key
+        
+        # wait_for_element now supported (was previously missing)
+        if action_type == "wait_for_element" and "selector" not in clean_action:
+            continue  # Skip wait without selector
         
         cleaned.append(clean_action)
     
